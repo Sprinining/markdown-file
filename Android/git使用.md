@@ -121,7 +121,7 @@ doc/**/*.pdf
 - `git commit`会**启动文本编辑器来输入提交说明**（启动的编辑器是通过 Shell 的环境变量 `EDITOR` 指定的，一般为 vim 或 emacs。 当然也可以使用 `git config --global core.editor` 命令设置编辑器。）
 - 使用命令`git commit -m <message>`，完成。
 - 提交时记录的是**放在暂存区域的快照**。 任何还未暂存文件的仍然保持已修改状态，可以在下次提交时纳入版本管理。 每一次运行提交操作，都是对你项目作一次快照，以后可以回到这个状态，或者进行比较。
-- git config core.autocrlf false**消除换行符警告**
+- `git config core.autocrlf false`**消除换行符警告**
 
 ### 2.6跳过使用暂存区域
 
@@ -209,9 +209,25 @@ $ git commit --amend
 - 要随时掌握工作区的状态，使用`git status`命令。
 
 - 如果`git status`告诉你有文件被修改过，用`git diff`可以查看修改内容。
+
 - 用`HEAD`表示当前版本，上一个版本就是`HEAD^`，上上一个版本就是`HEAD^^`，往上n个版本为HEAD~n。
+
 - 使用命令`git reset --hard commit_id`可以切换版本。
+
+  - $ git reset --hard xxx
+
+    三个区都同步，都跳到这个 xxx 的版本上。
+
+  - $ git reset --soft xxx
+
+    前面两个区不同步，就只有本地库跳到这个版本。
+
+  - $ git reset --mixed xxx
+
+    暂存区同步，工作区不动。
+
 - 用`git log`可以查看提交历史，以便确定要回退到哪个版本。--pretty=oneline显示简要信息。
+
 - 用`git reflog`查看命令历史，以便确定要回到未来的哪个版本。
 
 ### 撤销修改
@@ -282,6 +298,8 @@ $ git clone git@github.com:username/learngit.git
 
 ![git-command](E:\markdown\Android\git使用.assets\git-command.jpg)
 
+![640](git使用.assets/640.png)
+
 ### 创建与合并分支
 
 - 查看分支：`git branch`
@@ -301,7 +319,7 @@ $ git clone git@github.com:username/learngit.git
 
 ### 解决冲突
 
-
+`git diff --name-only --diff-filter=U`查看冲突
 
 ### 分支管理策略
 
