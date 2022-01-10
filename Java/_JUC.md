@@ -876,6 +876,15 @@ class Demo1 {
     }
 }
 ```
+- 定时任务
+
+```java
+ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1);
+executor.scheduleAtFixedRate(() -> {
+    
+}, 0, 50, TimeUnit.MILLISECONDS);
+```
+
 
 - 阻塞队列
   - new LinkedBlockingQueue<>(3)：设置固定的容量，此例中：i < 5时，阻塞队列刚刚满，5个任务使用两个核心线程；i < 6时，多了一个线程，6>队列+core，此时会新开辟一个线程（总线程数不大于5），6个任务使用两个核心线程和一个新开辟的线程

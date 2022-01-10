@@ -321,6 +321,20 @@ $ git clone git@github.com:username/learngit.git
 
 `git diff --name-only --diff-filter=U`查看冲突
 
+### 删除远程分支
+
+- 删除
+
+`git push origin --delete dev`
+
+- 查看所有分支
+
+`git branch -a`
+
+- 查看远程分支
+
+`git branch -r`
+
 ### 分支管理策略
 
 
