@@ -885,6 +885,18 @@ executor.scheduleAtFixedRate(() -> {
 }, 0, 50, TimeUnit.MILLISECONDS);
 ```
 
+- 倒计时
+
+```java
+ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
+scheduledExecutorService.schedule(new Runnable() {
+    @Override
+    public void run() {
+        System.out.println(111);
+    }
+}, 3, TimeUnit.SECONDS);
+```
+
 
 - 阻塞队列
   - new LinkedBlockingQueue<>(3)：设置固定的容量，此例中：i < 5时，阻塞队列刚刚满，5个任务使用两个核心线程；i < 6时，多了一个线程，6>队列+core，此时会新开辟一个线程（总线程数不大于5），6个任务使用两个核心线程和一个新开辟的线程
