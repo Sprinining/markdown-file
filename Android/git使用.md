@@ -28,7 +28,7 @@ $ git config --local --list
 $ git <verb> -h
 ```
 
-## 2.基础
+## 2.Git基础
 
 ### 2.1获取git仓库
 
@@ -71,7 +71,7 @@ M  lib/simplegit.rb
 
 新添加的未跟踪文件前面有 `??` 标记，**新添加到暂存区中的文件**前面有 `A` 标记，**修改过的文件**前面有 `M` 标记。 输出中有两栏，**左栏指明了暂存区的状态，右栏指明了工作区的状态**。例如，上面的状态报告显示： `README` 文件在工作区已修改但尚未暂存，而 `lib/simplegit.rb` 文件已修改且已暂存。 `Rakefile` 文件已修，暂存后又作了修改，因此该文件的修改中既有已暂存的部分，又有未暂存的部分。
 
-### 2.3忽略文件
+#### 忽略文件
 
 - 设置.gitignore文件
   - 所有空行或者以 `#` 开头的行都会被 Git 忽略。
@@ -107,23 +107,23 @@ doc/*.txt
 doc/**/*.pdf
 ```
 
-### 2.4查看已暂存和未暂存的修改
+#### 查看已暂存和未暂存的修改
 
 - `git diff`  ==比对工作区文件与最后一次提交的文件差异==
 - `git diff --staged` 命令。 ==比对暂存区文件与最后一次提交的文件差异==
 
-### 2.5提交更新
+#### 提交更新
 
 - `git commit`会**启动文本编辑器来输入提交说明**（启动的编辑器是通过 Shell 的环境变量 `EDITOR` 指定的，一般为 vim 或 emacs。 当然也可以使用 `git config --global core.editor` 命令设置编辑器。）
 - 使用命令`git commit -m <message>`，完成。
 - 提交时记录的是**放在暂存区域的快照**。 任何还未暂存文件的仍然保持已修改状态，可以在下次提交时纳入版本管理。 每一次运行提交操作，都是对你项目作一次快照，以后可以回到这个状态，或者进行比较。
 - `git config core.autocrlf false`**消除换行符警告**
 
-### 2.6跳过git add
+#### 跳过git add
 
 - 给 `git commit` 加上 `-a` 选项，Git 就会自动把**所有已经跟踪过的文件**暂存起来一并提交，从而跳过 `git add` 步骤
 
-### 2.7删除文件
+#### 删除文件
 
 - 如果对已被追踪的文件手动删除，运行 **git status** 时就会在 **Changes not staged for commit** 的提示，需要`git add`添加这次删除或者`git rm`删除暂存区和工作区的
 - 将文件从暂存区和工作区中删除
@@ -139,7 +139,7 @@ $ git rm <file>
 $ git rm --cached <file>
 ```
 
-### 2.8移动文件
+#### 移动文件
 
 ```shell
 $ git mv file_from file_to
@@ -153,7 +153,7 @@ $ git rm README.md
 $ git add README
 ```
 
-### 2.9查看提交历史
+### 2.3查看提交历史
 
 - `git log`按时间先后顺序列出所有的提交，最近的更新排在最上面。 正如你所看到的，这个命令会列出每个提交的 SHA-1 校验和、作者的名字和电子邮件地址、提交时间以及提交说明。
 -  `-p` 或 `--patch` ，它会显示每次提交所引入的差异（按 **补丁** 的格式输出）。 你也可以限制显示的日志条目数量，例如使用 `-2` 选项来只显示最近的两次提交
@@ -181,7 +181,7 @@ $ git add README
 | `--grep`                  | **仅显示提交说明中包含指定字符串的提交。**     |
 | `-S`                      | **仅显示添加或删除内容匹配指定字符串的提交。** |
 
-### 2.10撤销操作
+### 2.4撤销操作
 
 #### 覆盖提交
 
@@ -199,7 +199,7 @@ $ git commit --amend
 
 - `git checkout -- <file> ` 是一个危险的命令。对文件在本地的任何修改都会被最近一次提交的版本覆盖掉，==只是覆盖工作区==，暂存区的内容不会被覆盖
 
-### 2.11远程仓库
+### 2.5远程仓库
 
 - 查看已经配置的远程仓库服务器，可以运行 `git remote` 命令
 - 指定选项 `-v`，会显示需要读写远程仓库使用的 Git 保存的简写与其对应的 URL
@@ -208,7 +208,7 @@ $ git commit --amend
 - `git fetch <remote> `访问远程仓库，从中拉取所有没有的数据，拉取到远程分支。 执行完成后，必须手动将其合并入当前分支
 - `git remote rename`重命名，`git remote rm`删除
 
-### 2.12打标签
+### 2.6打标签
 
 - `git tag`显示已有标签
 - ` git tag -l "v1.8.5*"`使用 统配模式时，`-l`是必须的
@@ -228,9 +228,27 @@ $ git commit --amend
 
 #### 共享标签
 
+- `git push origin <tagname> `
+- `git push origin --tags`会把所有不在远程仓库服务器上的标签全部传送到那
 
+#### 删除标签
+
+- `git tag -d <tagname> `删除本地仓库的标签
+- `git push <remote> :refs/tags/<tagname>`更新到远程仓库，或者是`git push origin -d <tagname>`
 
 #### 检出标签
+
+- `git checkout -b version2 v2.0.0`通常需要创建一个新分支
+
+### 2.7Git别名
+
+- `  git config --global alias.ll 'log --oneline --graph'`: 用`git ll ` 代替 `git log --oneline --graph`
+
+
+
+
+
+## Git分支
 
 
 
