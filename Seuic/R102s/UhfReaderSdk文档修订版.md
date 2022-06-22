@@ -3,11 +3,11 @@
 ## 读写器连接
 ### 连接读写器
 
-| 方法   | synchronized Integer connectReader(@NotNull String address, int rtype) |
-| ------ | ------------------------------------------------------------ |
-| 参数   | address:串口地址, rtype:天线数                               |
-| 返回值 | 是否连接成功                                                 |
-| 说明   | UhfReaderSdk.INSTANCE.connectReader("/dev/ttyHS0", 8);       |
+| 方法   | synchronized Integer connectReader() |
+| ------ | ------------------------------------ |
+| 参数   |                                      |
+| 返回值 | 是否连接成功                         |
+| 说明   |                                      |
 
 ### 关闭读写器
 
@@ -19,7 +19,7 @@
 
 ### 是否已打开读写器
 
-| 方法   | Boolean isOpen() |
+| 方法   | Boolean isReaderOpen() |
 | ------ | ------------------ |
 | 参数   |                    |
 | 返回值 | 是否已打开 |
@@ -27,7 +27,7 @@
 
 ### 获取读写器工作状态
 
-| 方法   | Integer getWorkState() |
+| 方法   | Integer getReaderWorkState() |
 | ------ | -------------------- |
 | 参数   |                      |
 | 返回值 | 读写器工作状态 |
@@ -55,7 +55,7 @@ enum class ReaderWorkState(val state: Int) {
 | ------ | -------------------------------------------------- |
 | 参数   | 监听器                                             |
 | 返回值 |                                                    |
-| 说明 | 注册时要确保AIDL服务处于连接中 |
+| 说明 | 注册时要确保AIDL服务已经连接 |
 
 - 监听器
 
@@ -79,33 +79,28 @@ private static final IReadListener.Stub readListener = new IReadListener.Stub() 
 - TagInfo
 
 ```java
-// 天线端口
+// 标签被哪个天线读到
 private final byte AntennaID;
+// 标签是从哪个频点读到的
 private final int Frequency;
-// 时间戳
+// 标签读到的时间戳，单位毫秒（相对于命令发出的时刻）
 private final int TimeStamp;
 // 附加数据长度
 private final short EmbededDatalen;
 // 附加数据
 @Nullable
 private final byte[] EmbededData;
-@NotNull
-private final byte[] Res;
-// epc长度
+// epc长度，单位为字节
 private final short Epclen;
 // pc码，十六进制字节数组
 @NotNull
 private final byte[] PC;
-// crc码，十六进制字节数组
-@NotNull
-private final byte[] CRC;
 // epc码，十六进制字节数组
 @Nullable
 private final byte[] EpcId;
-private final int Phase;
+// 标签协议
 @Nullable
 private final String protocol;
-private final int ReadCnt;
 // 信号强度
 private final int RSSI;
 ```
@@ -113,6 +108,7 @@ private final int RSSI;
 - AIDL连接时再注册监听
 
 ```java
+// 注册观察者，AIDL服务连接上后再连接读写器和注册寻卡监听
 com.seuic.androidreader.sdk.Constants.INSTANCE.getConnectState().observeForever(aidlInfoBean -> {
     if (aidlInfoBean.getState() == com.seuic.androidreader.sdk.Constants.CONNECTED) {
         WorkStateUtils.getINSTANCE().tryConnect();
@@ -141,7 +137,7 @@ const val CONNECTING = 2 //正在连接中
 
 ### 清空寻卡监听
 
-| 方法   | void clearReadListener() |
+| 方法   | void clearReadListeners() |
 | ------ | ------------------- |
 | 参数   |                     |
 | 返回值 |                     |
@@ -155,13 +151,11 @@ const val CONNECTING = 2 //正在连接中
 | 返回值 | 0成功，非0失败 |
 | 说明 | 寻卡数据通过监听器获取 |
 
-
-
 ### 连续寻卡
 
-| 方法   | synchronized Integer inventoryStart(@NotNull int[] ants, boolean userEmbeded) |
+| 方法   | synchronized Integer inventoryStart(@NotNull int[] ants) |
 | ------ | ---------------------------------------------------------- |
-| 参数   | ants:启用的天线数组, userEmbeded暂时弃用(可随意传参) |
+| 参数   | ants:启用的天线数组 |
 | 返回值 | 0成功，非0失败 |
 | 说明 | 寻卡数据通过监听器获取 |
 
@@ -174,138 +168,79 @@ const val CONNECTING = 2 //正在连接中
 | 说明 |                                                      |
 
 ## 标签操作
-### 读标签操作
+### 读标签
 
-| 方法   | synchronized ParamsBackData<byte[]> readTagData(int currentAntenna, int bank, int blkcnt, int address, @NotNull String accessWord) |
+| 方法   | synchronized ParamsBackData<byte[]> readTagData(int antenna, int bank, int blockCount, int startAddress, @NotNull String accessPassword, @NotNull String epc) |
 | ------ | ------------------------------------------------------------ |
-| 参数   | currentAntenna: 天线端口1~8<br/>bank: 区(0，保留区；1，EPC 区；2，TID 区；3，用户数据区)<br/>blkcnt: 块数（一块一个字，16位）<br/>address: 起始地址（字为单位）<br/>accessWord: 访问密码<br/> |
+| 参数   | antenna: 天线端口1~8<br/>bank: 区(0，保留区；1，EPC 区；2，TID 区；3，用户数据区)<br/>blockCount: 块数（一块一个字，字为单位）<br/>startAddress: 起始地址（字为单位）<br/>accessPassword: 访问密码<br/>epc: 要过滤的标签EPC值 |
 | 返回值 | 十六进制的字节数组 |
-| 说明 | 进行单标签操作（读写锁销毁）前都要设置过滤，过滤出要操作的标签，操作完，过滤效果要取消或者设置回上一次的过滤 |
+| 说明 |  |
 
-### 写标签操作
+### 写标签
 
-| 方法   | synchronized Integer writeTagData(int currentAntenna, int bank, @NotNull String data, int address, @NotNull String accessWord) |
+| 方法   | synchronized Integer writeTagData(int antenna, int bank, @NotNull String data, int startAddress, @NotNull String accessPassword, @NotNull String epc) |
 | ------ | ------------------------------------------------------------ |
-| 参数   | currentAntenna: 天线端口1~8<br/>bank: 区(0，保留区；1，EPC 区；2，TID 区；3，用户数据区)<br/>data: 十六进制字符串<br/>address: 起始地址（字为单位）<br/>accessWord: 访问密码<br/> |
+| 参数   | antenna: 天线端口1~8<br/>bank: 区(0，保留区；1，EPC 区；2，TID 区；3，用户数据区)<br/>data: 十六进制字符串<br/>startAddress: 起始地址（字为单位）<br/>accessPassword: 访问密码<br/>epc: 要过滤的标签EPC值 |
 | 返回值 | 0成功，非0失败 |
 | 说明 |                                                      |
 
-### 锁标签操作
+### 锁标签
 
-| 方法   | synchronized ParamsBackData\<Integer> lockTag(int currentAntenna, int lbank, int ltype, @NotNull String accessWord) |
+| 方法   | synchronized ParamsBackData\<Integer> lockTag(int antenna, int lockBank, int lockType, @NotNull String accessPassword, @NotNull String epc) |
 | ------ | ------------------------------------------------------------ |
-| 参数   | currentAntenna: 天线端口1~8<br/>lbank: 区(0，保留区；1，EPC 区；2，TID 区；3，用户数据区)<br/>ltype: 锁操作类型(0，解锁；1，锁定；2，永久锁定)<br/>accessWord: 访问密码<br/> |
+| 参数   | antenna: 天线端口1~8<br/>lockBank: 区(0，保留区；1，EPC 区；2，TID 区；3，用户数据区)<br/>lockType: 锁操作类型(0，解锁；1，锁定；2，永久锁定)<br/>accessPassword: 访问密码<br/>epc: 要过滤的标签EPC值 |
 | 返回值 | 0成功，非0失败 |
 | 说明 | 保留区前两个字是销毁密码，后两个字是访问密码；锁卡前要先修改访问密码（不能为00000000）；锁定保留区时，读写都需要使用修改后的密码； 锁定其他三个区时，可以用00000000去读，但是如果要写（TID区不可写），必须用修改后的密码 |
 
-### 销毁标签操作
+### 销毁标签
 
-| 方法   | synchronized Integer destoryTag(int currentAntenna, @NotNull String accessWord) |
+| 方法   | synchronized Integer killTag(int antenna, @NotNull String killPassword, @NotNull String epc) |
 | ------ | --------------------------------------------------------- |
-| 参数   | currentAntenna:  天线端口1~8<br /> accessWord: 销毁密码 |
+| 参数   | antenna:  天线端口1~8<br />killPassword: 销毁密码<br />epc: 要过滤的标签EPC值 |
 | 返回值 | 0成功，非0失败 |
 | 说明 |                                                      |
 
 
 ## 读写器参数
 
-### 获取输出功率
+### 获取功率
 
-| 方法   | ParamsBackData<AntPowerData[]> getPower() |
+| 方法   | ParamsBackData\<Integer> getPower() |
 | ------ | ------------------------------------------------- |
 | 参数   |                                                   |
-| 返回值 | 各个天线端口的输入和输出功率 |
-| 说明 | writePower3000对应功率30（要除100） |
-
-- AntPowerData
-
-```java
-private int antid; // 天线端口1~8
-private short readPower;
-private short writePower;
-```
+| 返回值 | 功率1~33 |
+| 说明 |  |
 
 ### 设置功率
 
-| 方法   | Integer setPower(@NotNull AntPowerData[] antPowers) |
+| 方法   | Integer setPower(@IntRange(from = 1L,to = 33L)Integer power) |
 | ------ | ---------------------------------------------- |
-| 参数   | 功率数组 |
+| 参数   | 功率1~33 |
 | 返回值 | 0成功，非0失败 |
-| 说明 |                                                      |
+| 说明 | 八个端口设为统一值1~33 |
 
 ### 获取频段
 
 | 方法   | ParamsBackData\<String> getRegion() |
 | ------ | ------------------------------------ |
-| 参数   | 频段字符串 |
+| 参数   | 频段字符串(FCC, ETSI, China1, China2) |
 | 返回值 | 频段 |
-| 说明 |                                                      |
-
-- 频段
-
-```java
-public static enum Region_Conf {
-    RG_NONE(0),
-    RG_NA(1),
-    RG_EU(2),
-    RG_EU2(7),
-    RG_EU3(8),
-    RG_KR(3),
-    RG_PRC(6),
-    RG_PRC2(10),
-    RG_OPEN(255);
-
-    int p_v;
-
-    private Region_Conf(int v) {
-        this.p_v = v;
-    }
-
-    public int value() {
-        return this.p_v;
-    }
-
-    public static Reader.Region_Conf valueOf(int value) {
-        switch(value) {
-        case 0:
-            return RG_NONE;
-        case 1:
-            return RG_NA;
-        case 2:
-            return RG_EU;
-        case 3:
-            return RG_KR;
-        case 6:
-            return RG_PRC;
-        case 7:
-            return RG_EU2;
-        case 8:
-            return RG_EU3;
-        case 10:
-            return RG_PRC2;
-        case 255:
-            return RG_OPEN;
-        default:
-            return null;
-        }
-    }
-}
-```
+| 说明 | FCC: 北美, ETSI: 欧洲, China1: 中国1, China2: 中国2 |
 
 ### 设置频段
 
-| 方法   | Integer setRegion(int rcfValue) |
+| 方法   | Integer setRegion(String region) |
 | ------ | ---------------------------------------------------- |
-| 参数   | 频段对应的int值 |
+| 参数   | 频段字符串 |
 | 返回值 | 0成功，非0失败 |
 | 说明 |                                                      |
 
-### 获取附加数据配置
+### 获取附加数据
 
 | 方法   | ParamsBackData\<EmbededBean> getEmbededData() |
 | ------ | ---------------------------------------------- |
 | 参数   |                                                |
-| 返回值 | 附加数据配置 |
+| 返回值 | 附加数据 |
 | 说明 |                                                      |
 
 - EmbededBean
@@ -313,7 +248,7 @@ public static enum Region_Conf {
 ```java
 // 保留区0，TID区2，USER区3
 private int bank; 
-// 起始地址（字为单位）
+// 起始地址（字节为单位）
 private int startaddr; 
 // 字节数
 private int bytecnt; 
@@ -322,21 +257,45 @@ private int bytecnt;
 private byte[] accesspwd;
 ```
 
-### 设置并启用附加数据配置
+### 设置附加数据
 
-| 方法   | Integer setEmbededData(@NotNull String st, @NotNull String ct, int bank, @NotNull String pwd) |
+| 方法   | Integer setEmbededData(int startAddress, int byteCount, int bank, String accessPassword, boolean enable) |
 | ------ | ------------------------------------------------------------ |
-| 参数   | st: 起始地址（字为单位）<br />ct: 字节数<br />bank: 保留区0，TID区2，USER区3<br />pwd: 访问密码 |
+| 参数   | startAddress: 起始地址（字节为单位）<br />byteCount: 字节数<br />bank: 保留区0，TID区2，USER区3<br />accessPassword: 访问密码<br />enable: 是否启用附加数据 |
 | 返回值 | 0成功，非0失败 |
 | 说明 | EPC区不能设置 |
 
-### 设置不启用附加数据
+### 获取过滤
 
-| 方法   | Integer setEmbededDataNull() |
-| ------ | -------------------------- |
-| 参数   |                            |
-| 返回值 | 0成功，非0失败 |
-| 说明 |                                                      |
+| 方法   | ParamsBackData\<FilterBean> getFilter() |
+| ------ | --------------------------------------- |
+| 参数   |                                         |
+| 返回值 | 过滤参数                                |
+| 说明   |                                         |
+
+- FilterBean
+
+```java
+// 过滤数据区域1,2,3，分别是EPC、TID、User
+private int bank;
+// 过滤数据起始地址（字节为单位）
+private int startaddr;
+// 过滤数据长度（比特位数）
+private int flen;
+// 过滤数据
+@NotNull
+private byte[] fdata;
+// 是否匹配
+private int isInvert;
+```
+
+### 设置过滤
+
+| 方法   | Integer setFilter(int startAddress, int bank, String data, boolean isInvert, boolean enable) |
+| ------ | ------------------------------------------------------------ |
+| 参数   | startAddress: 起始地址（字节为单位）<br />bank: 过滤数据区域1,2,3，分别是EPC、TID、User<br />data: 过滤的数据<br />isInvert: 是否匹配<br />enable: 是否启用过滤 |
+| 返回值 | 0成功，非0失败                                               |
+| 说明   | enable为true设置后会一直生效，除非设置enable为false清空过滤  |
 
 ### 获取session
 
@@ -364,7 +323,7 @@ private byte[] accesspwd;
 
 ### 设置profile
 
-| 方法   | Integer setProfile(int profile) |
+| 方法   | Integer setProfile(@IntRange(from = 1L,to = 4L)int profile) |
 | ------ | ------------------------------ |
 | 参数   | profile 1~4 |
 | 返回值 | 0成功，非0失败 |
@@ -423,7 +382,7 @@ private int[] connectedants;
 
 ### 获取温度
 
-| 方法   | ParamsBackData\<Integer> getTempture() |
+| 方法   | ParamsBackData\<Integer> getTemperature() |
 | ------ | ----------------------------------- |
 | 参数   |                                     |
 | 返回值 | 温度（摄氏度） |
@@ -454,61 +413,22 @@ private String hardver;
 private String firmver;
 ```
 
-### 获取过滤
-
-| 方法   | ParamsBackData\<FilterBean> getFilter() |
-| ------ | ---------------------------------------- |
-| 参数   |                                          |
-| 返回值 | 过滤参数 |
-| 说明 |                                                      |
-
-### 设置过滤
-
-| 方法   | Integer setFilter(@NotNull String sdt, int bank, @NotNull String data, boolean suit) |
-| ------ | ------------------------------------------------------------ |
-| 参数   |                                                              |
-| 返回值 | 0成功，非0失败 |
-| 说明 | 设置后会一直生效，除非清空过滤 |
-
-- FilterBean
-
-```java
-// 过滤数据区域1,2,3，分别是EPC、TID、User
-private int bank;
-// 过滤数据起始地址
-private int startaddr;
-// 过滤数据长度
-private int flen;
-// 过滤数据
-@NotNull
-private byte[] fdata;
-// 是否匹配
-private int isInvert;
-```
-
-### 清空过滤
-
-| 方法   | Integer setFilterNull() |
-| ------ | --------------------- |
-| 参数   |                       |
-| 返回值 | 0成功，非0失败 |
-| 说明 |                                                      |
 
 ## GPIO
 
 ### 获取gpi
 
-| 方法   | ParamsBackData<int[]> getGpi(int gpoId, @NotNull int[] intArray) |
+| 方法   | ParamsBackData\<Integer> getGpi(int gpi) |
 | ------ | ------------------------------------------------------------ |
-| 参数   | gpoId: Int, gpin的端口号1~4<br />intArray: IntArray已废弃 |
-| 返回值 | gpi电平数组，实际只要用首元素，0低电平 |
-| 说明 | 取返回的数组首元素 |
+| 参数   | gpi: 端口号1~4 |
+| 返回值 | 0低电平 |
+| 说明 |  |
 
 ### 设置gpo
 
-| 方法   | Integer setGpo(int gpoId, int gpo) |
+| 方法   | Integer setGpo(int gpo, int value) |
 | ------ | ---------------------------------- |
-| 参数   | gpoId: Int,gpout端口1~4<br />gpo: Int电平高低 |
+| 参数   | gpo: 端口1~4<br />value: 电平高低 |
 | 返回值 | 0成功，非0失败 |
 | 说明 |                                                      |
 
