@@ -329,8 +329,6 @@ $ git commit --amend
 
 ### 3.1分支管理
 
-![git-command](E:\markdown\Android\git使用.assets\git-command.jpg)
-
 ![640](git使用.assets/640.png)
 
 #### 创建分支
