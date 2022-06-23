@@ -111,6 +111,7 @@ doc/**/*.pdf
 
 - `git diff`  ==比对工作区文件与最后一次提交的文件差异==
 - `git diff --staged` 命令。 ==比对暂存区文件与最后一次提交的文件差异==
+- `git diff --check`查看空白
 
 #### 提交更新
 
@@ -286,7 +287,7 @@ $ git commit --amend
 ### 2.7Git别名
 
 - `  git config --global alias.ll 'log --oneline --graph'`: 用`git ll ` 代替 `git log --oneline --graph`
-- `alias.ll=log --graph --pretty=format:'%Cred%h%Creset %C(yellow)%d%Creset %s %Cgreen(%Cblue%an %Cgreen%cd)%Creset'  --abbrev-commit --date=iso`
+- `git config --global alias.ll 'log --oneline --graph --decorate --all --date=iso --pretty=format:"%Cred%h%Creset %C(yellow)%d%Creset %s %Cgreen(%Cblue%an %Cgreen%cd)%Creset"'`
 
 ### 2.8版本回退
 
@@ -311,6 +312,18 @@ $ git commit --amend
     暂存区同步，工作区不动。
 
 - 用`git log`可以查看提交历史，以便确定要回退到哪个版本。--pretty=oneline显示简要信息。
+
+### 2.9贮藏
+
+- `git stash`或者`git stash push`：贮藏（stash）会处理工作目录的脏的状态——即跟踪文件的修改与暂存的改动(即已跟踪文件)——然后将未完成的修改保存到一 个栈上， 而你可以在任何时候重新应用这些改动（甚至在不同的分支上）
+- `git stash list`：查看贮藏
+- `git stash apply`：重新应用最近的贮藏
+- `git stash apply stash@{xxx}`：通过名字指定要应用的贮藏
+- `git stash drop`：移除
+- `git stash pop`：应用贮藏后从栈上移除
+- `git stash -u`：会贮藏未跟踪但没被忽略的文件
+- `git stash -a`：贮藏包括忽略的文件
+- `git stash branch <branchname>`：以你指定的分支名创建一个新分 支，检出贮藏工作时所在的提交，重新在那应用工作，然后在应用成功后丢弃贮藏
 
 ## 3.Git分支
 
@@ -393,3 +406,36 @@ $ git commit --amend
 
 - ==变基的风险==：要用它得遵守一条准则： 如果提交存在于你的仓库之外，而别人可能基于这些提交进行开发，那么不要执行变基。 如果你遵循这条金科玉律，就不会出差错。 否则，人民群众会仇恨你，你的朋友和家人也会嘲笑你，唾弃你。
 - 如果你只对不会离开你电脑的提交执行变基，那就不会有事。 如果你对已经推送过的提交执行变基，但别人没 有基于它的提交，那么也不会有事。 如果你对已经推送至共用仓库的提交上执行变基命令，并因此丢失了一些 别人的开发所基于的提交， 那你就有大麻烦了，你的同事也会因此鄙视你。 如果你或你的同事在某些情形下决意要这么做，请一定要通知每个人执行`git pull --rebase`命令，这样尽 管不能避免伤痛，但能有所缓解。
+
+### 3.4重置
+
+#### 重置的作用
+
+- `git reset --soft HEAD^`：移动HEAD到上一次提交，==本质是撤销了上一次的提交。不会改变暂存区和工作区==，可以用来压缩提交
+- `git reset --mixed HEAD^`或`git reset HEAD^`：在上一步基础上，把HEAD当前的内容==覆盖到暂存区==
+- `git reset --hard HEAD^`：在上一步基础上，进一步==覆盖到工作区==
+
+#### 指定路径来重置
+
+- 若指定了一个路径，reset将会跳 过第一步，并且将它的作用范围限定为指定的文件或文件集合
+- `git reset file.txt`或者`git reset --mixed HEAD file.txt`：跳过第一步，覆盖暂存区。本质上是把file.txt从HEAD复制到暂存区（==取消暂存文件的效果==）
+
+- `git reset 哈希值 file.txt`：指定一个提交来拉取该文件的对应版本
+
+#### 区别于checkout
+
+- `git checkout [branch]`与运行`git reset --hard [branch]`非常相似，它会更新所有三棵树使 其看起来像 [branch]，不过有两点重要的区别。 首先不同于`reset --hard`，checkout对工作目录是安全的，它会通过检查来确保不会将已更改的文件弄丢。 其实它还更聪明一些。它会在工作目录中先试着简单合并一下，这样所有 还未修改过的文件都会被更新。 而`reset --hard`则会不做检查就全面地替换所有东西
+- reset会移动HEAD分支的指向，而checkout只会移动HEAD自身来指向另一个分支
+
+- 下面的速查表列出了命令对树的影响。 “HEAD” 一列中的 “REF” 表示该命令移动了 HEAD 指向的分支引 用，而 “HEAD” 则表示只移动了 HEAD 自身。 特别注意 WD Safe? 一列——如果它标记为 NO，那么运行该命 令之前请考虑一下。
+
+![image-20220623220951240](git使用.assets/image-20220623220951240.png)
+
+### 3.5高级合并
+
+- `git merge --abort`：尝试恢复到运行合并前的状态， 但当运行命令前，在工作目录中有未储藏、未 提交的修改时它不能完美处理，所以使用前最好保持工作区干净
+- `git merge -Xignore-all-space`：比较行时，完全忽略空白修改
+- `git merge -Xignore-space-change`：将一个空白符与多个连续的空白字符视作等价
+
+### 3.6子模块
+
