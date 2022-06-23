@@ -205,7 +205,7 @@ const val CONNECTING = 2 //正在连接中
 
 ### 获取功率
 
-| 方法   | ParamsBackData\<Integer> getPower() |
+| 方法   | ParamsBackData<AntPowerData[]> getPower() |
 | ------ | ------------------------------------------------- |
 | 参数   |                                                   |
 | 返回值 | 功率1~33 |
@@ -213,11 +213,11 @@ const val CONNECTING = 2 //正在连接中
 
 ### 设置功率
 
-| 方法   | Integer setPower(@IntRange(from = 1L,to = 33L)Integer power) |
+| 方法   | Integer setPower(@NotNull AntPowerData[] antPowers) |
 | ------ | ---------------------------------------------- |
 | 参数   | 功率1~33 |
 | 返回值 | 0成功，非0失败 |
-| 说明 | 八个端口设为统一值1~33 |
+| 说明 |  |
 
 ### 获取频段
 

@@ -157,6 +157,7 @@ $ git add README
 
 - `git log`按时间先后顺序列出所有的提交，最近的更新排在最上面。 正如你所看到的，这个命令会列出每个提交的 SHA-1 校验和、作者的名字和电子邮件地址、提交时间以及提交说明。
 -  `-p` 或 `--patch` ，它会显示每次提交所引入的差异（按 **补丁** 的格式输出）。 你也可以限制显示的日志条目数量，例如使用 `-2` 选项来只显示最近的两次提交
+-  用`git reflog`查看命令历史，以便确定要回到未来的哪个版本。
 
 | 选项              | 说明                                                         |
 | :---------------- | :----------------------------------------------------------- |
@@ -197,7 +198,18 @@ $ git commit --amend
 
 #### 撤销对文件的修改
 
-- `git checkout -- <file> ` 是一个危险的命令。对文件在本地的任何修改都会被最近一次提交的版本覆盖掉，==只是覆盖工作区==，暂存区的内容不会被覆盖
+- `git checkout -- <file> ` 是一个危险的命令。对文件在本地的任何修改都会被最近一次提交的版本(暂存区或者最近一次commit的文件)覆盖掉，==只是覆盖工作区==，暂存区的内容不会被覆盖
+
+- 命令`git checkout -- readme.txt`意思就是，把`readme.txt`文件在工作区的修改全部撤销，这里有两种情况：
+  - `readme.txt`自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；
+  - `readme.txt`已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。
+  总之，就是让这个文件**回到最近一次`git commit`或`git add`时的状态**。
+
+场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令`git checkout -- file`。
+
+场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令`git reset HEAD <file>`，就回到了场景1，第二步按场景1操作。
+
+场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，参考版本回退一节，不过前提是没有推送到远程库。
 
 ### 2.5远程仓库
 
@@ -207,6 +219,37 @@ $ git commit --amend
 
 - `git fetch <remote> `访问远程仓库，从中拉取所有没有的数据，拉取到远程分支。 执行完成后，必须手动将其合并入当前分支
 - `git remote rename`重命名，`git remote rm`删除
+- 把一个已有的本地仓库与之关联，然后把本地仓库的内容推送到GitHub仓库
+
+  - 与远程库关联
+
+  ```shell
+  $ git remote add origin git@github.com:username/learngit.git
+  ```
+
+  - 把本地库的所有内容推送到远程库上
+
+  ```shell
+  $ git push -u origin master
+  ```
+
+  第一次推送`master`分支时，加上了`-u`参数，Git不但会把本地的`master`分支内容推送的远程新的`master`分支，还会把本地的`master`分支和远程的`master`分支关联起来，在以后的推送或者拉取时就可以简化命令。
+
+  - 把本地`master`分支的最新修改推送至GitHub。
+
+  ```shell
+  $ git push origin master
+  ```
+
+  - 如果添加的时候地址写错了，或者就是想删除远程库，可以用`git remote rm <name>`命令。使用前，建议先用`git remote -v`查看远程库信息，然后根据名字删除。此处的“删除”其实是解除了本地和远程的绑定关系，并不是物理上删除了远程库。
+
+- 从github仓库克隆出新的仓库
+
+  - 克隆到本地文件夹
+
+  ```shell
+  $ git clone git@github.com:username/learngit.git
+  ```
 
 ### 2.6打标签
 
@@ -243,16 +286,9 @@ $ git commit --amend
 ### 2.7Git别名
 
 - `  git config --global alias.ll 'log --oneline --graph'`: 用`git ll ` 代替 `git log --oneline --graph`
+- `alias.ll=log --graph --pretty=format:'%Cred%h%Creset %C(yellow)%d%Creset %s %Cgreen(%Cblue%an %Cgreen%cd)%Creset'  --abbrev-commit --date=iso`
 
-
-
-
-
-## Git分支
-
-
-
-### 版本回退
+### 2.8版本回退
 
 - 要随时掌握工作区的状态，使用`git status`命令。
 
@@ -262,175 +298,98 @@ $ git commit --amend
 
 - 使用命令`git reset --hard commit_id`可以切换版本。
 
-  - $ git reset --hard xxx
+  - `git reset --hard xxx`
 
     三个区都同步，都跳到这个 xxx 的版本上。
 
-  - $ git reset --soft xxx
+  - `git reset --soft xxx`
 
     前面两个区不同步，就只有本地库跳到这个版本。
 
-  - $ git reset --mixed xxx
+  - `git reset --mixed xxx`
 
     暂存区同步，工作区不动。
 
 - 用`git log`可以查看提交历史，以便确定要回退到哪个版本。--pretty=oneline显示简要信息。
 
-- 用`git reflog`查看命令历史，以便确定要回到未来的哪个版本。
+## 3.Git分支
 
-### 撤销修改
-
-- 命令`git checkout -- readme.txt`意思就是，把`readme.txt`文件在工作区的修改全部撤销，这里有两种情况：
-  - `readme.txt`自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；
-  - `readme.txt`已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。
-  总之，就是让这个文件**回到最近一次`git commit`或`git add`时的状态**。
-
-- 用命令`git reset HEAD <file>`可以把暂存区的修改撤销掉（unstage），重新放回工作区。
-
-场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令`git checkout -- file`。
-
-场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令`git reset HEAD <file>`，就回到了场景1，第二步按场景1操作。
-
-场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，参考版本回退一节，不过前提是没有推送到远程库。
-
-### 删除
-
-如果在文件管理器中直接删除文件，git会发现有文件被删除了。现在有两个选择：
-
-- 确实要从版本库中删除该文件，那就用命令`git rm`删掉，并且`git commit`。
-- 另一种情况是删错了，因为版本库里还有呢，所以可以很轻松地把误删的文件恢复到最新版本：
-
-```shell
-$ git checkout -- test.txt
-```
-
-`git checkout`其实是**用版本库里的版本替换工作区的版本**，无论工作区是修改还是删除，都可以“一键还原”。
-
-命令`git rm`用于删除一个文件。如果一个文件已经被提交到版本库，那么永远不用担心误删，但是只能恢复文件到最新版本，会丢失**最近一次提交后修改的内容**。
-
-## 远程仓库
-
-### 把一个已有的本地仓库与之关联，然后把本地仓库的内容推送到GitHub仓库
-
-- 与远程库关联
-
-```shell
-$ git remote add origin git@github.com:username/learngit.git
-```
-
-- 把本地库的所有内容推送到远程库上
-
-```shell
-$ git push -u origin master
-```
-
-第一次推送`master`分支时，加上了`-u`参数，Git不但会把本地的`master`分支内容推送的远程新的`master`分支，还会把本地的`master`分支和远程的`master`分支关联起来，在以后的推送或者拉取时就可以简化命令。
-
-- 把本地`master`分支的最新修改推送至GitHub。
-
-```shell
-$ git push origin master
-```
-
-- 如果添加的时候地址写错了，或者就是想删除远程库，可以用`git remote rm <name>`命令。使用前，建议先用`git remote -v`查看远程库信息，然后根据名字删除。此处的“删除”其实是解除了本地和远程的绑定关系，并不是物理上删除了远程库。
-
-### 从github仓库克隆出新的仓库
-
-- 克隆到本地文件夹
-
-```shell
-$ git clone git@github.com:username/learngit.git
-```
-
-## 分支管理
+### 3.1分支管理
 
 ![git-command](E:\markdown\Android\git使用.assets\git-command.jpg)
 
 ![640](git使用.assets/640.png)
 
-### 创建与合并分支
+#### 创建分支
 
 - 查看分支：`git branch`
+
+- 查看每个分支的最后一次提交：`git branch -v`
+
+- 更详细的：`git branch -vv`会将所有的本地分支列出来并且包 含更多的信息，如每一个分支正在跟踪哪个远程分支与本地分支是否是领先、落后或是都有
+
+- 查看已经合并或者没合并的分支：`git branch --merged`，`git branch --no-merged`
 
 - 创建分支：`git branch <name>`
 
 - 切换分支：`git checkout <name>`或者`git switch <name>`
 
 - 创建+切换分支：`git checkout -b <name>`或者`git switch -c <name>`
+- 删除分支：`git branch -d <name>`，有未合并的时，需用`git branch -D`强制删除
+
+#### 合并分支
 
 - 合并某分支到当前分支：`git merge <name>`
-
-- 删除分支：`git branch -d <name>`
-
-- 合并分支图：git log --graph
+- 合并分支图：`git log --graph`，用`git log --oneline --graph --decorate --all`更清晰
 - 合并分支时，加上`--no-ff`参数就可以用普通模式合并，合并后的历史有分支，能看出来曾经做过合并，而`fast forward`合并就看不出来曾经做过合并。`$ git merge --no-ff -m "merge with no-ff" dev`
+- 两个分支在同一条线上：快进（fast-forward）
+- 不在一条线上：开发历史从一个更早的地方开始分叉开来，Git 会使用两个分支的末端所指的快照以及这两个分支最近的公共祖先，做一个简单的==三方合并==。Git 将此次三方合并的结果做了一个新的快照并且==自动创建一个新的提交==指向它。 这个被称作一次合并提交，它的特别之处在于他有不止一个父提交。
 
-### 解决冲突
+#### 解决冲突
 
-`git diff --name-only --diff-filter=U`查看冲突
+`git diff --name-only --diff-filter=U`查看冲突的文件
 
-### 删除远程分支
+### 3.2远程分支
 
-- 删除
+- `git branch -a`：查看所有分支
 
-`git push origin --delete dev`
+- `git branch -r`：查看远程分支
 
-- 查看所有分支
+- `git ls-remote` ：显式地获得远程引用的完整列表
+- `git remote show`：获得远程分支的更多信息
 
-`git branch -a`
+- `git fetch <remote>`：从远程仓库抓取本地没有的数据，并更新本地数据库，移动 `origin/master` 指针到更新之后的位置
+- `git config --global credential.helper cache`：避免每次输密码
 
-- 查看远程分支
+#### 推送
 
-`git branch -r`
+- `git push <remote> <branch> `：推送到远程
+  - `git push origin severfix`：Git 自动将 test分支名字展开为**refs/heads/severfix:refs/heads/severfix**， ==推送本地的severfix分支来更新远程仓库上的severfix分支==
+  - 也可以`git push origin severfix:severfix`或者`git push origin severfix:newName`
+  - 下一次其他协作者从服务器上抓取数据时，他们会在本地生成一个远程分支 origin/serverfix，指向服务器 的 serverfix 分支的引用，要特别注意的一点是当抓取到新的远程跟踪分支时，本地不会自动生成一份可编辑的副本（拷贝）。 换一句话 说，这种情况下，不会有一个新的 serverfix 分支——只有一个不可以修改的 origin/serverfix 指针。 可以运行 git merge origin/serverfix 将这些工作合并到当前所在的分支
+  - 如果想要在自己的 serverfix 分支上工作，可以将其建立在远程跟踪分支之上：` git checkout -b serverfix origin/serverfix`，这会有一个用于工作的本地分支，并且起点位于 origin/serverfix。
 
-### 分支管理策略
+#### 跟踪分支
 
+- 先`git fetch <remote>`更新远程跟踪分支
 
+- `git checkout -b <branch> <remote>/<branch>`快捷方式为`git checkout --track origin/serverfix`：当克隆一个仓库时，它通常会自动地创建一个跟踪origin/master的 master分支
+- `git fetch --all; git branch -vv`：需要在运行此命令前抓 取所有的远程仓库
 
-### Bug分支
+#### 删除远程分支
 
+- `git push origin -d test`删除
 
+### 3.3变基
 
-### Feature分支
+- https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA
 
+- 变基操作的实质是丢弃一些现有的提交，然后相应地新建一些内容一样但实际上不同的提交
+- `git switch dev`切换到开发分支，`git rebase master`把dev分支上的修改应用到master分支上，`git switch master`切回主分支，`git merge dev`进行一次快进合并
 
+- `git rebase --onto master server client`：取出 client 分支，找出它从 server 分支分歧之后的补丁， 然后把这些补丁在 master 分支上重放一遍，让 client 看起来像直接基于 master 修改一样，然后切回主分支进行一次快进合并`git switch master; git merge client`
 
+- `git rebase master server`：将server中的修改变基到master
 
-
-
-
-
-
-## 标签管理
-
-- 切换到需要打标签的分支上，敲命令`git tag <name>`就可以打一个新标签：
-
-  ```shell
-  $ git tag v1.0
-  ```
-
-  可以用命令`git tag`查看所有标签：
-
-  ```shell
-  $ git tag
-  v1.0
-  ```
-
-- 命令`git tag <tagname>`用于新建一个标签，默认为`HEAD`，也可以指定一个commit id；
-
-- 命令`git tag -a <tagname> -m "blablabla..."`可以指定标签信息；
-
-- 命令`git tag`可以查看所有标签。
-
-- 用`git show <tagname>`查看标签信息。
-
-- 命令`git push origin <tagname>`可以推送一个本地标签；
-
-- 命令`git push origin --tags`可以推送全部未推送过的本地标签；
-
-- 命令`git tag -d <tagname>`可以删除一个本地标签；
-
-- 命令`git push origin :refs/tags/<tagname>`可以删除一个远程标签。
-
-## 3.分支
-
+- ==变基的风险==：要用它得遵守一条准则： 如果提交存在于你的仓库之外，而别人可能基于这些提交进行开发，那么不要执行变基。 如果你遵循这条金科玉律，就不会出差错。 否则，人民群众会仇恨你，你的朋友和家人也会嘲笑你，唾弃你。
+- 如果你只对不会离开你电脑的提交执行变基，那就不会有事。 如果你对已经推送过的提交执行变基，但别人没 有基于它的提交，那么也不会有事。 如果你对已经推送至共用仓库的提交上执行变基命令，并因此丢失了一些 别人的开发所基于的提交， 那你就有大麻烦了，你的同事也会因此鄙视你。 如果你或你的同事在某些情形下决意要这么做，请一定要通知每个人执行`git pull --rebase`命令，这样尽 管不能避免伤痛，但能有所缓解。
