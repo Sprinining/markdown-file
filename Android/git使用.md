@@ -323,7 +323,8 @@ $ git commit --amend
 - `git stash pop`：应用贮藏后从栈上移除
 - `git stash -u`：会贮藏未跟踪但没被忽略的文件
 - `git stash -a`：贮藏包括忽略的文件
-- `git stash branch <branchname>`：以你指定的分支名创建一个新分 支，检出贮藏工作时所在的提交，重新在那应用工作，然后在应用成功后丢弃贮藏
+- `git stash branch <branchname>`：以你指定的分支名，在stash时的最近一次的commit处（不是从当前commit处），创建一个新分支，检出贮藏工作时所在的提交，重新在那应用工作，然后在应用成功后丢弃贮藏
+- `git stash show -p stash@{xxx}`：显示详情
 
 ## 3.Git分支
 
@@ -342,6 +343,8 @@ $ git commit --amend
 - 查看已经合并或者没合并的分支：`git branch --merged`，`git branch --no-merged`
 
 - 创建分支：`git branch <name>`
+
+- 移动分支：`git branch -f <name> <commitId>`
 
 - 切换分支：`git checkout <name>`或者`git switch <name>`
 

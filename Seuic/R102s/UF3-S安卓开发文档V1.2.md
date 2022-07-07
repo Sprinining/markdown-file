@@ -1,4 +1,4 @@
-# UhfReaderSdk文档
+# UhfReaderSdk接口
 
 ## 读写器连接
 ### 连接读写器
@@ -86,12 +86,12 @@ private final int Frequency;
 // 标签读到的时间戳，单位毫秒（相对于命令发出的时刻）
 private final int TimeStamp;
 // 附加数据长度
-private final short EmbededDatalen;
+private final short EmbeddedDataLen;
 // 附加数据
 @Nullable
-private final byte[] EmbededData;
+private final byte[] EmbeddedData;
 // epc长度，单位为字节
-private final short Epclen;
+private final short EpcLen;
 // pc码，十六进制字节数组
 @NotNull
 private final byte[] PC;
@@ -207,15 +207,24 @@ const val CONNECTING = 2 //正在连接中
 
 | 方法   | ParamsBackData<AntPowerData[]> getPower() |
 | ------ | ------------------------------------------------- |
-| 参数   |                                                   |
-| 返回值 | 功率1~33 |
+| 参数   |  |
+| 返回值 | 天线数组，功率1~33 |
 | 说明 |  |
+
+- AntPowerData
+
+```kotlin
+// 天线id 1~8
+var antid: Int = 0,
+var readPower: Short = 0,
+var writePower: Short = 0
+```
 
 ### 设置功率
 
 | 方法   | Integer setPower(@NotNull AntPowerData[] antPowers) |
 | ------ | ---------------------------------------------- |
-| 参数   | 功率1~33 |
+| 参数   | 天线数组，功率1~33 |
 | 返回值 | 0成功，非0失败 |
 | 说明 |  |
 
@@ -225,7 +234,7 @@ const val CONNECTING = 2 //正在连接中
 | ------ | ------------------------------------ |
 | 参数   | 频段字符串(FCC, ETSI, China1, China2) |
 | 返回值 | 频段 |
-| 说明 | FCC: 北美, ETSI: 欧洲, China1: 中国1, China2: 中国2 |
+| 说明 | FCC: 北美, ETSI: 欧洲, China1: 中国1, China2: 中国2, KR: 韩国 |
 
 ### 设置频段
 
@@ -237,13 +246,13 @@ const val CONNECTING = 2 //正在连接中
 
 ### 获取附加数据
 
-| 方法   | ParamsBackData\<EmbededBean> getEmbededData() |
+| 方法   | ParamsBackData\<EmbeddedBean> getEmbeddedData() |
 | ------ | ---------------------------------------------- |
 | 参数   |                                                |
 | 返回值 | 附加数据 |
 | 说明 |                                                      |
 
-- EmbededBean
+- EmbeddedBean
 
 ```java
 // 保留区0，TID区2，USER区3
@@ -255,11 +264,13 @@ private int bytecnt;
 // 访问密码
 @NotNull
 private byte[] accesspwd;
+// 是否启用
+private boolean enable;
 ```
 
 ### 设置附加数据
 
-| 方法   | Integer setEmbededData(int startAddress, int byteCount, int bank, String accessPassword, boolean enable) |
+| 方法   | Integer setEmbeddedData(int startAddress, int byteCount, int bank, String accessPassword, boolean enable) |
 | ------ | ------------------------------------------------------------ |
 | 参数   | startAddress: 起始地址（字节为单位）<br />byteCount: 字节数<br />bank: 保留区0，TID区2，USER区3<br />accessPassword: 访问密码<br />enable: 是否启用附加数据 |
 | 返回值 | 0成功，非0失败 |
@@ -277,16 +288,16 @@ private byte[] accesspwd;
 
 ```java
 // 过滤数据区域1,2,3，分别是EPC、TID、User
-private int bank;
+private Integer bank;
 // 过滤数据起始地址（字节为单位）
-private int startaddr;
-// 过滤数据长度（比特位数）
-private int flen;
+private Integer startAddress;
 // 过滤数据
 @NotNull
-private byte[] fdata;
+private String data;
 // 是否匹配
-private int isInvert;
+private Boolean isInvert;
+// 是否启用过滤
+private Boolean enable;
 ```
 
 ### 设置过滤
