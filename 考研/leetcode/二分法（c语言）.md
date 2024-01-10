@@ -25,7 +25,7 @@ int binarySearch(int *array, int size, int target) {
 }
 ```
 
-## 大于等于（找应该插入的位置，左边界）
+## xxxxxxxxxx struct ListNode *reverseBetween(struct ListNode *head, int left, int right) {    if (head == NULL || head->next == NULL || left >= right) return head;    // 虚拟头节点    struct ListNode *dummyHead = (struct ListNode *) malloc(sizeof(struct ListNode));    dummyHead->next = head;    struct ListNode *preNode = dummyHead;    int count = left - 1;    // preNode为left的直接前驱    while (count-- > 0) preNode = preNode->next;    // 暂存反转后的子链表的尾节点    struct ListNode *newTail = preNode->next;​    // 反转子链表    struct ListNode *pre = NULL, *next = NULL, *cur = preNode->next;    count = right - left + 1;    while (count-- > 0) {        next = cur->next;        cur->next = pre;        pre = cur;        cur = next;    }    // pre是right节点，即反转后子链表的头节点，next是原链表中right的直接后继    preNode->next = pre;    newTail->next = next;    return dummyHead->next;}c
 
 ```c
 // 大于等于（找应该插入的位置，左边界）
