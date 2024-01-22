@@ -126,7 +126,12 @@ doc/**/*.pdf
 
 #### 删除文件
 
-- 如果对已被追踪的文件手动删除，运行 **git status** 时就会在 **Changes not staged for commit** 的提示，需要`git add`添加这次删除或者`git rm`删除暂存区和工作区的
+- 如果对已被追踪的文件手动删除，运行 **git status** 时就会在 **Changes not staged for commit** 的提示，需要`git add`添加这次删除或者`git rm`删除暂存区和工作区的，-A把所有更改包括已删除的文件都添加到暂存区
+
+```bash
+$ git add -A
+```
+
 - 将文件从暂存区和工作区中删除
 
 ```shell
