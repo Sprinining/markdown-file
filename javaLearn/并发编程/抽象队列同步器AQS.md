@@ -290,3 +290,130 @@ private void unparkSuccessor(Node node) {
 在`java.util.concurrent.locks.ReentrantLock`的实现中，`tryRelease(arg)`会减少持有锁的数量，如果持有锁的数量变为0，释放锁并返回true。
 
 如果`tryRelease(arg)`成功释放了锁，那么接下来会检查队列的头结点。如果头结点存在并且waitStatus不为0（这意味着有线程在等待），那么会调用`unparkSuccessor(Node h)`方法来唤醒等待的线程。
+
+## 自定义同步组件
+
+```java
+package org.example;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+
+// 同一时刻，只允许最多两个线程同时访问，超过两个线程的访问会被阻塞
+public class TwinsLock implements Lock {
+    private final Sync sync = new Sync(2);
+
+    // 静态内部类，继承同步器并重写指定方法，然后将同步器组合在自定义同步组件的实现中
+    private static final class Sync extends AbstractQueuedSynchronizer {
+        // count 为临界资源数量
+        Sync(int count) {
+            if (count <= 0) {
+                throw new IllegalArgumentException("临界资源数量必须大于0");
+            }
+            // 设置同步状态，此处同步状态的值就是临界资源数量
+            setState(count);
+        }
+
+        // 共享方式获取同步状态，返回值大于等于 0 时，表示线程成功获取同步状态，对于上层的TwinsLock来说表示当前线程获取了锁
+        @Override
+        protected int tryAcquireShared(int reduceCount) {
+            // 先查询当前同步状态并判断是否符合预期，再用CAS设置同步状态
+            while (true) {
+                // 获取同步状态
+                int current = getState();
+                int newCount = current - reduceCount;
+                // CAS 方式设置同步状态
+                if (newCount < 0 || compareAndSetState(current, newCount)) {
+                    return newCount;
+                }
+            }
+        }
+
+        // 共享方式释放同步状态
+        @Override
+        protected boolean tryReleaseShared(int returnCount) {
+            while (true) {
+                int current = getState();
+                int newCount = current + returnCount;
+                if (compareAndSetState(current, newCount)) {
+                    return true;
+                }
+            }
+        }
+
+    }
+
+    // 以下为 Lock 接口需要重写的方法
+    @Override
+    public void lock() {
+        // 调用同步器提供的模板方法，这些模板方法会调用到上面重写的方法，如 tryAcquireShared、tryReleaseShared
+        // 共享方式获取同步状态，获取失败会进入同步队列等待。与独占式获取区别在于同一时刻可以有多个线程获取到同步状态
+        sync.acquireShared(1);
+    }
+
+    @Override
+    public void unlock() {
+        // 共享方式释放同步状态
+        sync.releaseShared(1);
+    }
+
+    @Override
+    public void lockInterruptibly() throws InterruptedException {
+    }
+
+    @Override
+    public boolean tryLock() {
+        return false;
+    }
+
+    @Override
+    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+        return false;
+    }
+
+    @Override
+    public Condition newCondition() {
+        return null;
+    }
+}
+
+class TwinsLockTest {
+    public static void main(String[] args) {
+        final Lock lock = new TwinsLock();
+        class Worker extends Thread {
+            @Override
+            public void run() {
+                while (true) {
+                    lock.lock();
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                        System.out.println(Thread.currentThread().getName());
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < 10; i++) {
+            Worker w = new Worker();
+            w.setDaemon(true);
+            w.start();
+        }
+
+        for (int i = 0; i < 10; i++) {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println();
+        }
+    }
+}
+```
