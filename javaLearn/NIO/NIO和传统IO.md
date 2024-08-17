@@ -1,4 +1,4 @@
-![img](https://cdn.tobebetterjavaer.com/stutymore/nio-better-io-20230406180538.png)
+![img](NIO和传统IO.assets/nio-better-io-20230406180538.png)
 
 传统 IO 基于字节流或字符流（如 FileInputStream、BufferedReader 等）进行文件读写，以及使用 Socket 和 ServerSocket 进行网络传输。
 
