@@ -85,3 +85,46 @@ priority_queue<int, vector<int>,greater<int>> numbersl {greater<int>(), values};
 - `swap(priority_queue<T>& other)`：和参数的元素进行交换，所包含对象的类型必须相同。
 
 priority_queue 也实现了赋值运算，可以将右操作数的元素赋给左操作数；同时也定义了拷贝和移动版的赋值运算符。需要注意的是，priority_queue 容器并没有定义比较运算符。因为需要保持元素的顺序，所以添加元素通常会很慢。
+
+### 自定义比较函数
+
+```c++
+#include <vector>
+#include <iostream>
+#include <queue>
+
+using namespace std;
+
+struct ListNode {
+    int val;
+    ListNode *next;
+
+    ListNode() : val(0), next(nullptr) {}
+
+    ListNode(int x) : val(x), next(nullptr) {}
+
+    ListNode(int x, ListNode *next) : val(x), next(next) {}
+};
+
+class Solution {
+public:
+    // 作为类成员函数，一定要声明static
+    static bool cmp(ListNode *a, ListNode *b) {
+        return (*a).val > (*b).val;
+    }
+};
+
+int main() {
+    priority_queue<ListNode *, vector<ListNode *>, decltype(&Solution::cmp)> heap(Solution::cmp);
+    heap.push(new ListNode(2));
+    heap.push(new ListNode(1));
+    heap.push(new ListNode(6));
+    heap.push(new ListNode(3));
+
+    while (!heap.empty()) {
+        cout << (*heap.top()).val << " ";
+        heap.pop();
+    }
+    return 0;
+}
+```
