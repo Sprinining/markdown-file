@@ -2,74 +2,54 @@
 
 `priority_queue `容器适配器定义了一个元素有序排列的队列。默认队列头部的元素优先级最高。因为它是一个队列，所以只能访问第一个元素，这也意味着优先级最高的元素总是第一个被处理。
 
-`priority_queue `模板有 3 个参数，其中两个有默认的参数；第一个参数是存储对象的类型，第二个参数是存储元素的底层容器，第三个参数是函数对象，它定义了一个用来决定元素顺序的断言。因此模板类型是：
-
 ```c++
+// 有 3 个参数，其中两个有默认的参数；第一个参数是存储对象的类型，第二个参数是存储元素的底层容器，第三个参数是函数对象，它定义了一个用来决定元素顺序的断言。
 template <typename T, typename Container=vector<T>, typename Compare=less<T>> class priority_queue
 ```
 
-`priority_queue` 实例默认有一个 `vector `容器。函数对象类型 `less<T>` 是一个默认的排序断言，定义在头文件 `function `中，决定了容器中最大的元素会排在队列前面。fonction 中定义了 `greater<T>`，用来作为模板的最后一个参数对元素排序，最小元素会排在队列前面。
+`priority_queue` 实例默认有一个 `vector `容器。函数对象类型 `less<T>` 是一个默认的排序断言，定义在头文件 `function `中（其中还定义了 `greater<T>`），决定了容器中==最大的元素会排在队列前面==。
+
+```c++
+int main() {
+    vector<int> ary = {9, 5, 2, 7};
+    // 默认用 less<>，队头（堆顶）是最大元素
+    priority_queue<int> heap{begin(ary), end(ary)};
+
+    // 使用 greater<>，队头（堆顶）是最小元素
+    priority_queue<int, vector<int>, greater<>> heap2{begin(ary), end(ary)};
+
+    // 优先级队列可以使用任何容器来保存元素，只要容器有成员函数 front()、push_back()、pop_back()、size()、empty()。这显然包含了 deque 容器
+    priority_queue<int, deque<int>, greater<>> heap3{begin(ary), end(ary)};
+}
+```
 
 ![img](priority_queue.assets/2-1P913134031947.jpg)
 
-可以如下所示生成一个空的优先级队列：
+### 创建和初始化
 
 ```c++
-priority_queue<string> words; 
+int main() {
+    // 1.生成一个空的优先级队列
+    priority_queue<string> words;
+
+    // 初始化列表中的序列可以来自于任何容器，并且不需要有序。优先级队列会对它们进行排序
+    string wrds[]{"one", "two", "three", "four"};
+    // 2.用适当类型的对象初始化一个优先级队列
+    priority_queue<string> words2{begin(wrds), end(wrds)}; // "two" "three" "one" "four"
+
+    // 3.拷贝构造函数会生成一个和现有对象同类型的 priority_queue 对象，它是现有对象的一个副本
+    priority_queue<string> copy_words{words2};
+
+    // 4.可以生成 vector 或 deque 容器，然后用它们来初始化 priority_queue
+    vector<int> values{21, 22, 12, 3, 24, 54, 56};
+    // 第一个参数对元素排序的函数对象，第二个参数是一个提供初始元素的容器
+    priority_queue<int> numbers{less<int>(), values};
+	// 在队列中用函数对象对 vector 元素的副本排序。values 中元素的顺序没有变，但是优先级队列中的元素顺序会改变。优先级队列中用来保存元素的容器是私有的，因此只能通过调用 priority_queue 对象的成员函数来对容器进行操作。
+
+    // 5.如果想使用不同类型的比较函数，需要指定全部的模板类型参数
+    priority_queue<int, vector<int>, greater<>> numbers2{greater<>(), values};
+}
 ```
-
-可以用适当类型的对象初始化一个优先级队列：
-
-```c++
-string wrds[] { "one", "two", "three", "four"};
-priority_queue<string> words { begin(wrds),end(wrds)}; // "two" "three" "one" "four" 
-```
-
-初始化列表中的序列可以来自于任何容器，并且不需要有序。优先级队列会对它们进行排序。
-
-拷贝构造函数会生成一个和现有对象同类型的 priority_queue 对象，它是现有对象的一个副本。例如：
-
-```c++
-priority_queue<string> copy_words {words};
-```
-
-也有带右值引用参数的拷贝构造函数，它可以移动一个实参对象。
-
-当对容器内容反向排序时，最小的元素会排在队列前面，这时候需要指定 3 个模板类型参数：
-
-```c++
-string wrds[] {"one", "two", "three", "four"};
-priority_queue<string, vector<string>, greater<string>> words1 {begin (wrds) , end (wrds) }; // "four" "one" "three" "two"
-```
-
-这会通过使用 operator>() 函数对字符串对象进行比较，进而生成一个优先级队列，因此这会和它们在队列中的顺序相反。
-
-优先级队列可以使用任何容器来保存元素，只要容器有成员函数 front()、push_back()、pop_back()、size()、empty()。这显然包含了 deque 容器，因此这里也可以用 deque 来代替：
-
-```c++
-string wrds [] {"one", "two", "three", "four"};
-priority_queue<string, deque<string>> words {begin(wrds), end(wrds)};  // "two" "three" "one" "four" 
-```
-
-这个 words 优先级队列在 deque 容器中保存了一些 wrds 数组中的字符串，这里使用默认的比较断言。priority_queue 构造函数会生成一个和第二个类型参数同类型的容器来保存元素，这也是 priority_queue 对象的底层容器。
-
-可以生成 vector 或 deque 容器，然后用它们来初始化 priority_queue：
-
-```c++
-vector<int> values{21, 22, 12, 3, 24, 54, 56};
-// 第一个参数是一个用来对元素排序的函数对象，第二个参数是一个提供初始元素的容器
-priority_queue<int> numbers{less<int>(), values};
-```
-
-在队列中用函数对象对 vector 元素的副本排序。values 中元素的顺序没有变，但是优先级队列中的元素顺序变为：56 54 24 22 21 12 3。优先级队列中用来保存元素的容器是私有的，因此只能通过调用 priority_queue 对象的成员函数来对容器进行操作。
-
-如果想使用不同类型的函数，需要指定全部的模板类型参数。例如：
-
-```c++
-priority_queue<int, vector<int>,greater<int>> numbersl {greater<int>(), values};
-```
-
-第三个类型参数是一个比较对象类型。如果要指定这个参数，必须指定前两个参数——元素类型和底层容器类型。
 
 ### priority_queue 操作
 
@@ -87,6 +67,10 @@ priority_queue<int, vector<int>,greater<int>> numbersl {greater<int>(), values};
 priority_queue 也实现了赋值运算，可以将右操作数的元素赋给左操作数；同时也定义了拷贝和移动版的赋值运算符。需要注意的是，priority_queue 容器并没有定义比较运算符。因为需要保持元素的顺序，所以添加元素通常会很慢。
 
 ### 自定义比较函数
+
+#### 定义函数
+
+- 属于传入函数指针的方式
 
 ```c++
 #include <vector>
@@ -127,4 +111,62 @@ int main() {
     }
     return 0;
 }
+```
+
+#### class 重载运算符()
+
+- 属于传入函数对象的方式
+
+```c++
+class cmp {
+public:
+    bool operator()(int a, int b) {
+        return a > b;
+    }
+};
+// 小顶堆
+priority_queue<int, vector<int>, cmp> heap;
+```
+
+#### struct 重载运算符
+
+- 属于传入函数对象的方式
+
+```c++
+struct cmp {
+    bool operator()(int a, int b) {
+        return a > b;
+    }
+};
+// 小顶堆
+priority_queue<int, vector<int>, cmp> heap;
+```
+
+#### lambda 表达式
+
+- 属于传入函数指针的方式
+
+```c++
+auto cmp = [](int a, int b) -> bool {
+    return a > b;
+};
+// 小顶堆
+priority_queue<int, vector<int>, decltype(cmp)> heap(cmp);
+```
+
+#### function 包装 lambda 表达式
+
+- 属于传入函数指针的方式
+
+```c++
+// 要导入头文件
+#include <functional>
+```
+
+```c++
+function<bool(int, int)> cmp = [](int a, int b) -> bool {
+    return a > b;
+};
+// 小顶堆
+priority_queue<int, vector<int>, decltype(cmp)> heap(cmp);
 ```
