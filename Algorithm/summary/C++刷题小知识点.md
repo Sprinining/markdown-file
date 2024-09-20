@@ -101,3 +101,69 @@ int main() {
     }
 }
 ```
+
+### 二维数组初始化
+
+```c++
+vector<vector<int>> graph(10, vector<int>(10));
+```
+
+## 注意事项
+
+- 题目给的数据范围，是否要用 `long`，尤其是要取模运算的题目，中间结果要用 `long`
+- `resize(n, val)`：新增出来的位置才会设置成值 `val`
+- 注意是无向图还是有向图，无向图要加两条边
+- 链式前向星建图时，对于无向图，nxt、to、weight 数组大小设置两倍边数加一
+
+### 随机数
+
+#### rand()
+
+- 返回一个随机数值，范围在[0, RAND_MAX]之间。`RAND_MAX` 定义在 `stdlib.h` 头文件中，C++中可以使用 `cstdlib` 头文件。
+
+- `rand()` 产生的是伪随机数，每次执行的结果是相同的
+
+#### srand()
+
+- 用来设置 `rand()` 产生随机数时的随机种子，参数 `seed` 必须是整数，如果每次 `seed` 设置都相同，`rand()` 产生的随机数同样也相同
+
+```c++
+int main() {
+    // 返回系统的当前日历时间，自 1970 年 1 月 1 日以来经过的秒数。如果系统没有时间，则返回 -1。
+    cout << time(NULL) << endl;
+    // 若给定参数，则将当前时间保存到该参数中；若不给定参数，参数填NULL。
+    time_t t;
+    cout << time(&t) << endl;
+    cout << t << endl;
+    // 三个输出结果都一样
+}
+```
+
+```c++
+int main() {
+    cout << "RAND_MAX:" << RAND_MAX << endl;
+    // 避免每次生成固定的随机数
+    srand((unsigned) time(NULL));
+    for (int i = 0; i < 10; i++)
+        cout << rand() << endl;
+}
+```
+
+#### 产生指定范围的随机数
+
+```c++
+int main() {
+    int a = 3, b = 23;
+    // 起始位置
+    int start = a;
+    // 范围长度
+    int len = b - a + 1;
+    // [a, b)
+    cout << (rand() % (len - 1)) + start << endl;
+    // [a, b]
+    cout << (rand() % len) + start << endl;
+    
+    // [0, 1] 的浮点数
+    cout << rand() / (double) (RAND_MAX) << endl;
+}
+```
